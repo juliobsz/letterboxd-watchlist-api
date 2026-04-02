@@ -1,8 +1,7 @@
 <div align="center">
     <h1 style="font-size: 28px; margin: 10px 0;">Letterboxd Watchlist Scraper</h1>
-    <p>Scrapes Letterboxd watchlists and enriches data with TMDB.</p>
 </div>
-<p align="center">Since Letterboxd's official API is not available for public use, this project scrapes Letterboxd to get watchlist data.</p>
+<p align="center">Since Letterboxd's official API is not available for public use, this project scrapes Letterboxd to get watchlist data and enriches it using TMDB Api.</p>
 <p align="center">Built with Express.js, TypeScript, Axios and Cheerio.</p>
 
 ## Requirements
