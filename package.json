@@ -1,0 +1,29 @@
+{
+  "name": "letterboxd-watchlist-api",
+  "version": "1.0.0",
+  "description": "Letterboxd watchlist scraper with TMDB enrichment API",
+  "main": "build/index.js",
+  "keywords": ["letterboxd", "scraper", "api", "tmdb"],
+  "author": "Julio Barbosa <juliobrsouza@outlook.com>",
+  "repository": "https://github.com/juliobsz/letterboxd-watchlist-api",
+  "license": "GPL-3.0-only",
+  "scripts": {
+    "dev": "tsnd --respawn --no-notify --transpile-only src/index.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "build": "tsc -p tsconfig.json",
+    "start": "node build/index.js"
+  },
+  "dependencies": {
+    "axios": "1.14.0",
+    "cheerio": "^1.2.0",
+    "cors": "^2.8.6",
+    "dotenv": "^16.6.1",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^6.0.2"
+  }
+}
