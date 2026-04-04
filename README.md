@@ -19,6 +19,7 @@ Rename `.env.example` to `.env`
 TMDB_TOKEN=your_tmdb_v4_token
 ORIGIN_URL=your_website_url
 PORT=3000
+TMDB_LOOKUP_CONCURRENCY=4
 ```
 
 ## Host it yourself

@@ -2,8 +2,6 @@ import { EnrichedMovie } from '../@types/letterboxd';
 import { getPosterByMovieName } from './tmdb';
 import { getAllWatchlistMovies } from './letterboxd';
 
-const TMDB_LOOKUP_CONCURRENCY = 4;
-
 export async function buildEnrichedWatchlist(username: string): Promise<EnrichedMovie[]> {
     const watchlistMovies = await getAllWatchlistMovies(username);
     const enrichedMovies: EnrichedMovie[] = new Array(watchlistMovies.length);
@@ -45,7 +43,7 @@ export async function buildEnrichedWatchlist(username: string): Promise<Enriched
         }
     };
 
-    const workerCount = Math.min(TMDB_LOOKUP_CONCURRENCY, watchlistMovies.length);
+    const workerCount = Math.min(Number(process.env.TMDB_LOOKUP_CONCURRENCY)??4, watchlistMovies.length);
     await Promise.all(Array.from({ length: workerCount }, () => worker()));
 
     return enrichedMovies;
