@@ -1,9 +1,12 @@
 <div align="center">
+    <img src="./src/assets/twinboxd-no-bg.png" alt="logo" style="height: 100px;"/>
     <h1 style="font-size: 28px; margin: 10px 0;">Letterboxd Watchlist Scraper</h1>
-    <p>Scrapes Letterboxd watchlists and enriches data with TMDB.</p>
 </div>
-<p align="center">Since Letterboxd's official API is not available for public use, this project scrapes Letterboxd to get watchlist data.</p>
+<p align="center">Since Letterboxd's official API is not available for public use, this project scrapes Letterboxd to get watchlist data and enriches it with TMDB.</p>
 <p align="center">Built with Express.js, TypeScript, Axios and Cheerio.</p>
+
+## Twinboxd
+This API was built for [Twinboxd](https://twinboxd.me) ([Github Repo](https://github.com/juliobsz/twinboxd)), a web app that compares Letterboxd watchlists to find matching movies. Check it out!
 
 ## Requirements
 
@@ -20,6 +23,7 @@ TMDB_TOKEN=your_tmdb_v4_token
 ORIGIN_URL=your_website_url
 PORT=3000
 TMDB_LOOKUP_CONCURRENCY=4
+MAX_RESULTS=800
 ```
 
 ## Host it yourself

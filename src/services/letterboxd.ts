@@ -10,6 +10,18 @@ const LETTERBOXD_BASE_URL = 'https://letterboxd.com';
 const LETTERBOXD_PAGE_DELAY_MS = 1500;
 const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36';
 
+function getMaxResultsLimit(): number | null {
+    const rawValue = process.env.MAX_RESULTS?.trim();
+    if (!rawValue) return null;
+
+    const parsed = Number(rawValue);
+    if (!Number.isFinite(parsed)) return null;
+
+    return Math.max(0, Math.floor(parsed));
+}
+
+const MAX_RESULTS = getMaxResultsLimit();
+
 class LetterboxdUserNotFoundError extends Error {
     constructor(username: string) {
         super(`Letterboxd user not found: ${username}`);
@@ -96,15 +108,21 @@ async function getWatchlistPage(username: string, page: number): Promise<Scraped
 }
 
 export async function getAllWatchlistMovies(username: string): Promise<ScrapedMovie[]> {
+    if (MAX_RESULTS === 0) return [];
+
     const allMovies: ScrapedMovie[] = [];
     let page = 1;
 
     while (true) {
+        if (MAX_RESULTS !== null && allMovies.length >= MAX_RESULTS) break;
+
         const currentPageMovies = await getWatchlistPage(username, page);
         if (!currentPageMovies.length) break;
 
         allMovies.push(...currentPageMovies);
         page += 1;
+
+        if (MAX_RESULTS !== null && allMovies.length >= MAX_RESULTS) break;
 
         await delay(LETTERBOXD_PAGE_DELAY_MS);
     }
@@ -115,5 +133,8 @@ export async function getAllWatchlistMovies(username: string): Promise<ScrapedMo
         dedupedBySlug.set(movie.slug, movie);
     }
 
-    return [...dedupedBySlug.values()];
+    const dedupedMovies = [...dedupedBySlug.values()];
+
+    if (MAX_RESULTS === null) return dedupedMovies;
+    return dedupedMovies.slice(0, MAX_RESULTS);
 }

@@ -63,12 +63,12 @@ export async function getPosterByMovieName(movieName: string, year?: number): Pr
     if (inFlight) return inFlight;
 
     const lookupPromise = (async () => {
-        if (!process.env.TMDB_TOKEN) throw new Error("TMDB_TOKEN is not defined.");
+        if (!process.env.TMDB_TOKEN) throw new Error('TMDB_TOKEN is not defined.');
 
         const url = new URL(TMDB_SEARCH_URL);
-        url.searchParams.set("query", query);
-        url.searchParams.set("include_adult", "true");
-        if (year) url.searchParams.set("year", String(year));
+        url.searchParams.set('query', query);
+        url.searchParams.set('include_adult', 'true');
+        if (year) url.searchParams.set('year', String(year));
 
         let results: TmdbMovieResult[] = [];
 
