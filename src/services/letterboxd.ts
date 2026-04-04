@@ -10,6 +10,13 @@ const LETTERBOXD_BASE_URL = 'https://letterboxd.com';
 const LETTERBOXD_PAGE_DELAY_MS = 1500;
 const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36';
 
+class LetterboxdUserNotFoundError extends Error {
+    constructor(username: string) {
+        super(`Letterboxd user not found: ${username}`);
+        this.name = 'LetterboxdUserNotFoundError';
+    }
+}
+
 export async function getWatchlistRoute(req: Request, res: Response) {
     const username = String(req.params.username || "").trim();
 
@@ -25,7 +32,7 @@ export async function getWatchlistRoute(req: Request, res: Response) {
             movies
         });
     } catch (error) {
-        console.error(error);
+        if (error instanceof LetterboxdUserNotFoundError) return res.status(404).json({ error: 'user not found' });
         return res.status(500).json({ error: 'failed to fetch watchlist' });
     }
 }
@@ -33,11 +40,19 @@ export async function getWatchlistRoute(req: Request, res: Response) {
 async function getWatchlistPage(username: string, page: number): Promise<ScrapedMovie[]> {
     const url = `${LETTERBOXD_BASE_URL}/${username}/watchlist/page/${page}/`;
 
-    const { data } = await axios.get(url, {
-        headers: {
-            'User-Agent': USER_AGENT
-        }
-    });
+    let data: string;
+    try {
+        const response = await axios.get(url, {
+            headers: {
+                'User-Agent': USER_AGENT
+            }
+        });
+
+        data = response.data;
+    } catch (error) {
+        if (axios.isAxiosError(error) && error.response?.status === 404) throw new LetterboxdUserNotFoundError(username);
+        throw error;
+    }
 
     const $ = cheerio.load(data);
     const movies: ScrapedMovie[] = [];
@@ -102,4 +117,3 @@ export async function getAllWatchlistMovies(username: string): Promise<ScrapedMo
 
     return [...dedupedBySlug.values()];
 }
-
