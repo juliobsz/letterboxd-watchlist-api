@@ -1,26 +1,12 @@
 import axios from 'axios';
 import * as cheerio from 'cheerio';
-import { ScrapedMovie } from '../@types/letterboxd';
-import { delay } from '../utils/delay';
-import { extractYear } from '../utils/movieText';
-import { buildEnrichedWatchlist } from './enrichment';
 import { Request, Response } from 'express';
+import { getAllWatchlistMovies } from './scraper';
+import { buildMoviesPosters } from '../utils/moviePoster';
+import { Movie, MovieInput } from '../@types/letterboxd';
 
 const LETTERBOXD_BASE_URL = 'https://letterboxd.com';
-const LETTERBOXD_PAGE_DELAY_MS = 1500;
 const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36';
-
-function getMaxResultsLimit(): number | null {
-    const rawValue = process.env.MAX_RESULTS?.trim();
-    if (!rawValue) return null;
-
-    const parsed = Number(rawValue);
-    if (!Number.isFinite(parsed)) return null;
-
-    return Math.max(0, Math.floor(parsed));
-}
-
-const MAX_RESULTS = getMaxResultsLimit();
 
 class LetterboxdUserNotFoundError extends Error {
     constructor(username: string) {
@@ -35,7 +21,7 @@ export async function getWatchlistRoute(req: Request, res: Response) {
     if (!username) return res.status(400).json({ error: 'username is required' });
 
     try {
-        const movies = await buildEnrichedWatchlist(username);
+        const movies: Movie[] = await getAllWatchlistMovies(username);
 
         return res.json({
             username,
@@ -49,7 +35,7 @@ export async function getWatchlistRoute(req: Request, res: Response) {
     }
 }
 
-async function getWatchlistPage(username: string, page: number): Promise<ScrapedMovie[]> {
+export async function getWatchlistPage(username: string, page: number): Promise<Movie[]> {
     const url = `${LETTERBOXD_BASE_URL}/${username}/watchlist/page/${page}/`;
 
     let data: string;
@@ -67,74 +53,22 @@ async function getWatchlistPage(username: string, page: number): Promise<Scraped
     }
 
     const $ = cheerio.load(data);
-    const movies: ScrapedMovie[] = [];
+    const scrapedMovies: MovieInput[] = [];
 
     $(".griditem").each((_, element) => {
-        const target =
-            $(element).find("[data-target-link]").attr('data-target-link') ||
-            $(element).find("div[data-target-link]").attr('data-target-link') ||
-            '';
+        const slug = $(element).find('[data-item-slug]').attr('data-item-slug') || '';
+        const posterLocation = 'https://letterboxd.com/film/' + slug + '/poster/std/125/';
 
-        if (!target.startsWith('/film/')) return;
+        if (!slug) return;
 
-        const slug = target.replace('/film/', '').replace(/\/$/, '');
-        const imageAlt = $(element).find('img').attr('alt')?.trim() || '';
-        const rawTitle =
-            imageAlt ||
-            $(element).attr('data-film-name') ||
-            $(element).find('[data-film-name]').attr('data-film-name') ||
-            slug.replace(/-/g, ' ');
+        const title = $(element).find('[data-item-full-display-name]').attr('data-item-full-display-name') || 'Title not available';
 
-        const yearText =
-            $(element).text() ||
-            $(element).attr('data-film-release-year') ||
-            '';
-
-        const profile = $(".profile-mini-person");
-        const avatar = profile.find('img').attr('src') || '';
-        const displayName = String(profile.find('h1 a').prop('innerHTML') || '');
-
-        movies.push({
-            title: rawTitle,
-            year: extractYear(yearText),
-            slug,
-            letterboxdUrl: `${LETTERBOXD_BASE_URL}${target}`,
-            avatar,
-            displayName
+        scrapedMovies.push({
+            title,
+            letterboxdUrl: `${LETTERBOXD_BASE_URL}/film/${slug}`,
+            posterLocation
         });
     });
 
-    return movies;
-}
-
-export async function getAllWatchlistMovies(username: string): Promise<ScrapedMovie[]> {
-    if (MAX_RESULTS === 0) return [];
-
-    const allMovies: ScrapedMovie[] = [];
-    let page = 1;
-
-    while (true) {
-        if (MAX_RESULTS !== null && allMovies.length >= MAX_RESULTS) break;
-
-        const currentPageMovies = await getWatchlistPage(username, page);
-        if (!currentPageMovies.length) break;
-
-        allMovies.push(...currentPageMovies);
-        page += 1;
-
-        if (MAX_RESULTS !== null && allMovies.length >= MAX_RESULTS) break;
-
-        await delay(LETTERBOXD_PAGE_DELAY_MS);
-    }
-
-    const dedupedBySlug = new Map<string, ScrapedMovie>();
-
-    for (const movie of allMovies) {
-        dedupedBySlug.set(movie.slug, movie);
-    }
-
-    const dedupedMovies = [...dedupedBySlug.values()];
-
-    if (MAX_RESULTS === null) return dedupedMovies;
-    return dedupedMovies.slice(0, MAX_RESULTS);
+    return await buildMoviesPosters(scrapedMovies);
 }
