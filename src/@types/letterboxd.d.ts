@@ -1,19 +1,11 @@
-export type ScrapedMovie = {
+export type Movie = {
     title: string;
-    year?: number;
-    slug: string;
     letterboxdUrl: string;
-    avatar: string;
-    displayName: string;
+    posterUrl: string;
 };
 
-export type EnrichedMovie = {
+export type MovieInput = {
     title: string;
-    year?: number;
-    slug: string;
     letterboxdUrl: string;
-    tmdbId: number | null;
-    tmdbTitle: string | null;
-    releaseDate: string | null;
-    imageUrl: string | null;
+    posterLocation: string
 };
